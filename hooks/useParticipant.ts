@@ -5,6 +5,7 @@ import {
   RemoteParticipant,
   RemoteTrackPublication,
   Track,
+  TrackPublication,
 } from "livekit-client";
 
 export interface ParticipantState {
@@ -36,25 +37,19 @@ export function useParticipant(
   }, [participant]);
 
   useEffect(() => {
-    const onMuted = (track: Track) => {
+    const onMuted = (track: TrackPublication) => {
       if (track.source == Track.Source.Microphone) {
         setMuted(true);
       } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(true);
       }
     };
-    const onUnmuted = (track: Track) => {
+    const onUnmuted = (track: TrackPublication) => {
       if (track.source == Track.Source.Microphone) {
         setMuted(false);
       } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(false);
       }
-    };
-    const onSpeaking = () => {
-      setIsSpeaking(true);
-    };
-    const stoppedSpeaking = () => {
-      setIsSpeaking(false);
     };
     const onDisplayNameChanged = () => {
       setDisplayName(participant.name ?? '');
@@ -62,13 +57,12 @@ export function useParticipant(
 
     participant.on(ParticipantEvent.TrackMuted, onMuted);
     participant.on(ParticipantEvent.TrackUnmuted, onUnmuted);
-    participant.on(ParticipantEvent.StartedSpeaking, onSpeaking);
-    participant.on(ParticipantEvent.StoppedSpeaking, stoppedSpeaking);
+    participant.on(ParticipantEvent.IsSpeakingChanged, setIsSpeaking);
     participant.on(ParticipantEvent.TrackPublished, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackUnpublished, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackSubscribed, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackUnsubscribed, onPublicationsChanged);
-    participant.on(ParticipantEvent.DisplayNameChanged, onDisplayNameChanged);
+    participant.on(ParticipantEvent.ParticipantNameChanged, onDisplayNameChanged);
 
     onPublicationsChanged();
     participant.audioTracks.forEach((track) => {
@@ -85,8 +79,7 @@ export function useParticipant(
     return () => {
       participant.off(ParticipantEvent.TrackMuted, onMuted);
       participant.off(ParticipantEvent.TrackUnmuted, onUnmuted);
-      participant.off(ParticipantEvent.StartedSpeaking, onSpeaking);
-      participant.off(ParticipantEvent.StoppedSpeaking, stoppedSpeaking);
+      participant.off(ParticipantEvent.IsSpeakingChanged, setIsSpeaking);
       participant.off(ParticipantEvent.TrackPublished, onPublicationsChanged);
       participant.off(ParticipantEvent.TrackUnpublished, onPublicationsChanged);
       participant.off(ParticipantEvent.TrackSubscribed, onPublicationsChanged);
@@ -95,7 +88,7 @@ export function useParticipant(
         onPublicationsChanged
       );
       participant.off(
-        ParticipantEvent.DisplayNameChanged,
+        ParticipantEvent.ParticipantNameChanged,
         onDisplayNameChanged
       );
     };
