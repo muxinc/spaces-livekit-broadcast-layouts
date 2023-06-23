@@ -9,10 +9,10 @@ import {
   Track,
   RemoteParticipant,
   RemoteTrack,
-  TrackSource,
   RoomEvent,
   LocalTrack,
   LocalParticipant,
+  RemoteTrackPublication,
 } from "livekit-client";
 
 import { useRoom } from "./useRoom";
@@ -40,28 +40,29 @@ export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
   // Screenshare subscribed
   useEffect(() => {
     const handleScreenShareSubscribed = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
-      if (track.source === TrackSource.Screenshare) {
+      if (track.source === Track.Source.ScreenShare) {
         setScreenShareTrack(track);
         setParticipantScreenSharing(participant);
       }
 
-      if (track.source === TrackSource.ScreenshareAudio) {
+      if (track.source === Track.Source.ScreenShareAudio) {
         setScreenShareAudioTrack(track);
         setParticipantScreenSharing(participant);
       }
     };
 
     room?.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+      RoomEvent.TrackSubscribed,
       handleScreenShareSubscribed
     );
 
     return () => {
       room?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+        RoomEvent.TrackSubscribed,
         handleScreenShareSubscribed
       );
     };
@@ -70,28 +71,28 @@ export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
   // Screenshare unsubscribed
   useEffect(() => {
     const handleScreenShareUnsubscribed = (
+      publication: RemoteTrackPublication,
       _participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
-      if (track.source === TrackSource.Screenshare) {
+      if (publication.source === Track.Source.ScreenShare) {
         setScreenShareTrack(null);
         setParticipantScreenSharing(null);
       }
 
-      if (track.source === TrackSource.ScreenshareAudio) {
+      if (publication.source === Track.Source.ScreenShareAudio) {
         setScreenShareTrack(null);
         setParticipantScreenSharing(null);
       }
     };
 
     room?.on(
-      SpaceEvent.ParticipantTrackUnpublished,
+      RoomEvent.TrackUnpublished,
       handleScreenShareUnsubscribed
     );
 
     return () => {
       room?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+        RoomEvent.TrackUnpublished,
         handleScreenShareUnsubscribed
       );
     };

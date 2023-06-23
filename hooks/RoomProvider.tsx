@@ -3,6 +3,8 @@ import {
   LocalParticipant,
   Participant,
   RemoteParticipant,
+  RemoteTrack,
+  RemoteTrackPublication,
   Room,
   RoomEvent,
 } from "livekit-client";
@@ -76,6 +78,7 @@ export const RoomProvider: React.FC<Props> = ({
     };
 
     const handleParticipantTrackPublished = (
+      _publication: RemoteTrackPublication,
       participantWhoPublished: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
@@ -90,6 +93,7 @@ export const RoomProvider: React.FC<Props> = ({
     };
 
     const handleParticipantTrackUnpublished = (
+      _publication: RemoteTrackPublication,
       participantWhoUnpublished: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
@@ -128,6 +132,8 @@ export const RoomProvider: React.FC<Props> = ({
     };
 
     const handleParticipantTrackSubscriptionChange = (
+      _track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participantWhoChanged: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
@@ -142,25 +148,25 @@ export const RoomProvider: React.FC<Props> = ({
       });
     };
 
-    room.on(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-    room.on(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+    room.on(RoomEvent.ParticipantConnected, handleParticipantJoined);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantLeft);
 
     room.on(
-      SpaceEvent.ParticipantTrackPublished,
+      RoomEvent.TrackPublished,
       handleParticipantTrackPublished
     );
     room.on(
-      SpaceEvent.ParticipantTrackUnpublished,
+      RoomEvent.TrackUnpublished,
       handleParticipantTrackUnpublished
     );
-    room.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+    room.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
     room.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+      RoomEvent.TrackSubscribed,
       handleParticipantTrackSubscriptionChange
     );
     room.on(
-      SpaceEvent.ParticipantTrackUnsubscribed,
+      RoomEvent.TrackUnsubscribed,
       handleParticipantTrackSubscriptionChange
     );
 
@@ -168,6 +174,7 @@ export const RoomProvider: React.FC<Props> = ({
       .connect(livekitUrl, jwt, {})
       .then(() => {
         setLocalParticipant(room.localParticipant);
+        room.participants.forEach(handleParticipantJoined);
       })
       .catch((error) => {
         setJoinError(error.message);
@@ -176,25 +183,25 @@ export const RoomProvider: React.FC<Props> = ({
     roomRef.current = room;
 
     return () => {
-      room.off(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-      room.off(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+      room.off(RoomEvent.ParticipantConnected, handleParticipantJoined);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantLeft);
 
       room.off(
-        SpaceEvent.ParticipantTrackPublished,
+        RoomEvent.TrackPublished,
         handleParticipantTrackPublished
       );
       room.off(
-        SpaceEvent.ParticipantTrackUnpublished,
+        RoomEvent.TrackUnpublished,
         handleParticipantTrackUnpublished
       );
-      room.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+      room.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
       room.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+        RoomEvent.TrackSubscribed,
         handleParticipantTrackSubscriptionChange
       );
       room.off(
-        SpaceEvent.ParticipantTrackUnsubscribed,
+        RoomEvent.TrackUnsubscribed,
         handleParticipantTrackSubscriptionChange
       );
 

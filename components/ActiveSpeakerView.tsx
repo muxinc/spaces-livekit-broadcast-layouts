@@ -7,11 +7,12 @@ import {
 } from "react";
 import { Box, Flex, Center } from "@chakra-ui/react";
 import {
-  SpaceEvent,
+  RoomEvent,
   RemoteParticipant,
   Track,
   RemoteTrack,
   Participant,
+  RemoteTrackPublication,
 } from "livekit-client";
 
 import { useRoom } from "../hooks/useRoom";
@@ -145,8 +146,9 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     };
 
     const handleScreenshareSubscription = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
       if (
         track.source === Track.Source.ScreenShare &&
@@ -157,8 +159,9 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     };
 
     const handleScreenshareUnsubscription = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
       if (
         track.source === Track.Source.ScreenShare &&
@@ -168,26 +171,26 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       }
     };
 
-    room?.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-    room?.on(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
+    room?.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+    room?.on(RoomEvent.ParticipantDisconnected, handleActiveParticipantLeft);
     room?.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+      RoomEvent.TrackSubscribed,
       handleScreenshareSubscription
     );
     room?.on(
-      SpaceEvent.ParticipantTrackUnsubscribed,
+      RoomEvent.TrackUnsubscribed,
       handleScreenshareUnsubscription
     );
 
     return () => {
-      room?.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-      room?.off(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
+      room?.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+      room?.off(RoomEvent.ParticipantDisconnected, handleActiveParticipantLeft);
       room?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+        RoomEvent.TrackSubscribed,
         handleScreenshareSubscription
       );
       room?.off(
-        SpaceEvent.ParticipantTrackUnsubscribed,
+        RoomEvent.TrackUnsubscribed,
         handleScreenshareUnsubscription
       );
     };
