@@ -1,5 +1,5 @@
 import { Center } from "@chakra-ui/react";
-import { RemoteParticipant, TrackSource } from "@mux/spaces-web";
+import { RemoteParticipant, TrackSource } from "livekit-client";
 import VideoOff from "components/icons/VideoOff";
 import { useParticipant } from "hooks/useParticipant";
 import AudioRenderer from "./AudioRenderer";

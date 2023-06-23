@@ -1,8 +1,8 @@
 import { createContext } from "react";
-import { LocalParticipant, RemoteParticipant, Space } from "@mux/spaces-web";
+import { LocalParticipant, RemoteParticipant, Room } from "livekit-client";
 
 interface Mux {
-  space: Space | null;
+  room: Room | null;
   localParticipant: LocalParticipant | null;
   participants: RemoteParticipant[];
   joinError: string | null;

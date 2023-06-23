@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Track } from "@mux/spaces-web";
+import { Track } from "livekit-client";
 
 interface Props {
   track: Track;

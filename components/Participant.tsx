@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { RemoteParticipant, TrackSource } from "@mux/spaces-web";
+import { RemoteParticipant, TrackSource } from "livekit-client";
 
 import { useParticipant } from "../hooks/useParticipant";
 import { useParticipants } from "../hooks/useParticipants";

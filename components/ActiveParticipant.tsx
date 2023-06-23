@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@chakra-ui/react";
-import { RemoteParticipant } from "@mux/spaces-web";
+import { RemoteParticipant } from "livekit-client";
 import ParticipantRenderer from "./renderers/ParticipantRenderer";
 
 interface Props {

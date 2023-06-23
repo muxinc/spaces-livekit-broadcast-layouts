@@ -1,7 +1,7 @@
 import React from "react";
 import { Spinner, Center, Flex } from "@chakra-ui/react";
 
-import { useSpace } from "../hooks/useSpace";
+import { useSpace } from "../hooks/useRoom";
 import { useScreenShare } from "hooks/useScreenShare";
 import useWindowDimensions from "../hooks/useWindowDimensions";
 import Gallery from "./Gallery";

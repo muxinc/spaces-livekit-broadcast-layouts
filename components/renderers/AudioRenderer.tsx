@@ -1,4 +1,4 @@
-import { Track } from "@mux/spaces-web";
+import { Track } from "livekit-client";
 import { useEffect, useRef } from "react";
 
 interface AudioTrackProps {

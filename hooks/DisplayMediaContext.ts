@@ -1,4 +1,4 @@
-import { RemoteParticipant, Track } from "@mux/spaces-web";
+import { RemoteParticipant, Track } from "livekit-client";
 import { createContext } from "react";
 
 export interface DisplayMediaState {

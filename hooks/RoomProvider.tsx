@@ -4,9 +4,9 @@ import {
   LocalParticipant,
   ParticipantRole,
   RemoteParticipant,
-  Space,
-  SpaceEvent,
-} from "@mux/spaces-web";
+  Room,
+  RoomEvent,
+} from "livekit-client";
 
 import { MuxContext } from "./MuxContext";
 import { DisplayMediaProvider } from "./DisplayMediaProvider";
@@ -20,32 +20,32 @@ const participantHasTracks = (participant: RemoteParticipant) => {
 };
 
 type Props = {
+  livekitUrl?: string;
   jwt?: string;
   showNonPublishingParticipants: boolean;
   children: ReactNode;
 };
 
-export const SpaceProvider: React.FC<Props> = ({
+export const RoomProvider: React.FC<Props> = ({
   children,
   showNonPublishingParticipants,
   jwt,
+  livekitUrl,
 }) => {
-  const spaceRef = useRef<Space | null>(null);
+  const roomRef = useRef<Room | null>(null);
   const [participants, setParticipants] = useState<RemoteParticipant[]>([]);
   const [localParticipant, setLocalParticipant] =
     useState<LocalParticipant | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!jwt) {
+    if (!jwt || !livekitUrl) {
       return;
     }
 
-    let space: Space;
+    let room: Room;
     try {
-      space = new Space(jwt, {
-        automaticParticipantLimit: MAX_PARTICIPANTS_PER_PAGE,
-      });
+      room = new Room();
     } catch (e: any) {
       setJoinError(e.message);
       return;
@@ -146,30 +146,30 @@ export const SpaceProvider: React.FC<Props> = ({
       });
     };
 
-    space.on(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-    space.on(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+    room.on(SpaceEvent.ParticipantJoined, handleParticipantJoined);
+    room.on(SpaceEvent.ParticipantLeft, handleParticipantLeft);
 
-    space.on(
+    room.on(
       SpaceEvent.ParticipantTrackPublished,
       handleParticipantTrackPublished
     );
-    space.on(
+    room.on(
       SpaceEvent.ParticipantTrackUnpublished,
       handleParticipantTrackUnpublished
     );
-    space.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+    room.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
-    space.on(
+    room.on(
       SpaceEvent.ParticipantTrackSubscribed,
       handleParticipantTrackSubscriptionChange
     );
-    space.on(
+    room.on(
       SpaceEvent.ParticipantTrackUnsubscribed,
       handleParticipantTrackSubscriptionChange
     );
 
-    space
-      .join()
+    room
+      .connect(livekitUrl, jwt, {})
       .then((_localParticipant: LocalParticipant) => {
         setLocalParticipant(_localParticipant);
       })
@@ -177,40 +177,40 @@ export const SpaceProvider: React.FC<Props> = ({
         setJoinError(error.message);
       });
 
-    spaceRef.current = space;
+    roomRef.current = room;
 
     return () => {
-      space.off(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-      space.off(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+      room.off(SpaceEvent.ParticipantJoined, handleParticipantJoined);
+      room.off(SpaceEvent.ParticipantLeft, handleParticipantLeft);
 
-      space.off(
+      room.off(
         SpaceEvent.ParticipantTrackPublished,
         handleParticipantTrackPublished
       );
-      space.off(
+      room.off(
         SpaceEvent.ParticipantTrackUnpublished,
         handleParticipantTrackUnpublished
       );
-      space.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+      room.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
-      space.off(
+      room.off(
         SpaceEvent.ParticipantTrackSubscribed,
         handleParticipantTrackSubscriptionChange
       );
-      space.off(
+      room.off(
         SpaceEvent.ParticipantTrackUnsubscribed,
         handleParticipantTrackSubscriptionChange
       );
 
       setParticipants([]);
-      space.leave();
+      room.leave();
     };
   }, [jwt, setJoinError]);
 
   return (
     <MuxContext.Provider
       value={{
-        space: spaceRef.current,
+        room: roomRef.current,
         participants,
         localParticipant,
         joinError,

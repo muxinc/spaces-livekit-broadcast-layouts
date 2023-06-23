@@ -5,7 +5,7 @@ import {
   RemoteParticipant,
   Track,
   TrackSource,
-} from "@mux/spaces-web";
+} from "livekit-client";
 
 export interface ParticipantState {
   isMuted: boolean;

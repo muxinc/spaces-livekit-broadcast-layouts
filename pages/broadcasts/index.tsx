@@ -4,22 +4,21 @@ import getConfig from "next/config";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
-import { SpaceProvider } from "hooks/SpaceProvider";
+import { RoomProvider } from "hooks/RoomProvider";
 import { LayoutProvider } from "context/Layout";
 import Stage from "../../components/Stage";
 import { Layout } from "../../lib/types";
 
-interface Props {
-  spaceBackendURL: string;
-}
+interface Props {}
 
-const BroadcastPage: NextPage<Props> = ({ spaceBackendURL = "" }: Props) => {
+const BroadcastPage: NextPage<Props> = ({}: Props) => {
   let {
     isReady,
     query: {
+      url = "",
       token = "",
       background = null,
-      layout = Layout.Gallery,
+      template = Layout.Gallery,
       show_non_publishing_participants: showNonPublishingParticipants = false,
     },
   } = useRouter();
@@ -29,8 +28,11 @@ const BroadcastPage: NextPage<Props> = ({ spaceBackendURL = "" }: Props) => {
   if (Array.isArray(background)) {
     background = background[0];
   }
-  if (Array.isArray(layout)) {
-    layout = layout[0];
+  if (Array.isArray(template)) {
+    template = template[0];
+  }
+  if (Array.isArray(url)) {
+    url = url[0];
   }
   if (Array.isArray(showNonPublishingParticipants)) {
     showNonPublishingParticipants = showNonPublishingParticipants[0] === "true";
@@ -46,14 +48,15 @@ const BroadcastPage: NextPage<Props> = ({ spaceBackendURL = "" }: Props) => {
         <meta name="viewport" content="width=device-width,initial-scale=1.0" />
         <title>Mux Broadcast</title>
       </Head>
-      <SpaceProvider
+      <RoomProvider
+        livekitUrl={url}
         jwt={token}
         showNonPublishingParticipants={showNonPublishingParticipants as boolean}
       >
-        <LayoutProvider backgroundImage={background} layout={layout as Layout}>
+        <LayoutProvider backgroundImage={background} layout={template as Layout}>
           <Stage />
         </LayoutProvider>
-      </SpaceProvider>
+      </RoomProvider>
     </>
   );
 };

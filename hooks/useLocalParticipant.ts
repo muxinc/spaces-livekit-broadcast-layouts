@@ -1,4 +1,4 @@
-import { LocalParticipant } from "@mux/spaces-web";
+import { LocalParticipant } from "livekit-client";
 import { useContext } from "react";
 
 import { MuxContext } from "./MuxContext";

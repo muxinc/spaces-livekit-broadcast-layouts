@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { RemoteParticipant } from "@mux/spaces-web";
+import { RemoteParticipant } from "livekit-client";
 
 import { MuxContext } from "./MuxContext";
 import { MAX_PARTICIPANTS_PER_PAGE } from "lib/constants";

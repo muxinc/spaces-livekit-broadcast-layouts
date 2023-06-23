@@ -12,9 +12,9 @@ import {
   ActiveSpeaker,
   TrackSource,
   RemoteTrack,
-} from "@mux/spaces-web";
+} from "livekit-client";
 
-import { useSpace } from "../hooks/useSpace";
+import { useSpace } from "../hooks/useRoom";
 import { useScreenShare } from "hooks/useScreenShare";
 import { useParticipants } from "../hooks/useParticipants";
 import useWindowDimensions from "../hooks/useWindowDimensions";
