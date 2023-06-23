@@ -14,7 +14,7 @@ import {
   RemoteTrack,
 } from "livekit-client";
 
-import { useSpace } from "../hooks/useRoom";
+import { useRoom } from "../hooks/useRoom";
 import { useScreenShare } from "hooks/useScreenShare";
 import { useParticipants } from "../hooks/useParticipants";
 import useWindowDimensions from "../hooks/useWindowDimensions";
@@ -27,7 +27,7 @@ import { Layout } from "lib/types";
 interface Props {}
 
 export default function ActiveSpeakerView({}: Props): JSX.Element {
-  const { space } = useSpace();
+  const { room } = useRoom();
   const participants = useParticipants();
   const { screenShareTrack, screenShareAudioTrack } = useScreenShare();
   const layout = useLayout();
@@ -171,25 +171,25 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       }
     };
 
-    space?.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-    space?.on(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
-    space?.on(
+    room?.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+    room?.on(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
+    room?.on(
       SpaceEvent.ParticipantTrackSubscribed,
       handleScreenshareSubscription
     );
-    space?.on(
+    room?.on(
       SpaceEvent.ParticipantTrackUnsubscribed,
       handleScreenshareUnsubscription
     );
 
     return () => {
-      space?.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-      space?.off(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
-      space?.off(
+      room?.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+      room?.off(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
+      room?.off(
         SpaceEvent.ParticipantTrackSubscribed,
         handleScreenshareSubscription
       );
-      space?.off(
+      room?.off(
         SpaceEvent.ParticipantTrackUnsubscribed,
         handleScreenshareUnsubscription
       );
