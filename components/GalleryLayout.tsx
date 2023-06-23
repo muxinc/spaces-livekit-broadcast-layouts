@@ -2,6 +2,7 @@ import React, {
   Children,
   cloneElement,
   isValidElement,
+  ReactElement,
   ReactNode,
   useMemo,
 } from "react";
@@ -56,7 +57,7 @@ const GalleryLayout = ({
             bestFit.width &&
             bestFit.height
           ) {
-            return cloneElement(child, {
+            return cloneElement(child as ReactElement<any>, {
               width: bestFit.width,
               height: bestFit.height,
             });
