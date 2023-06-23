@@ -38,7 +38,7 @@ export default function ScreenShareLayout(): JSX.Element {
           const gridArea = String.fromCharCode("A".charCodeAt(0) + index);
           return (
             <Participant
-              key={participant.id}
+              key={participant.sid}
               participant={participant}
               rounded={true}
               gridArea={gridArea}

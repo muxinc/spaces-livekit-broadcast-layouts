@@ -19,7 +19,7 @@ const AudioRenderer = ({ track }: AudioTrackProps) => {
 
     // The MediaStreamTrack needs to be observed rather than the Mux Track
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.track]);
+  }, [track.mediaStreamTrack]);
 
   return <audio ref={audioEl} autoPlay playsInline />;
 };

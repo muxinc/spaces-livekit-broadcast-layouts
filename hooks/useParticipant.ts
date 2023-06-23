@@ -3,15 +3,15 @@ import {
   LocalParticipant,
   ParticipantEvent,
   RemoteParticipant,
+  RemoteTrackPublication,
   Track,
-  TrackSource,
 } from "livekit-client";
 
 export interface ParticipantState {
   isMuted: boolean;
   isSpeaking: boolean;
   isCameraOff: boolean;
-  subscribedTracks: Track[];
+  subscribedTracks: RemoteTrackPublication[];
   displayName: string;
 }
 
@@ -21,32 +21,32 @@ export function useParticipant(
   const [isMuted, setMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
-  const [subscribedTracks, setSubscribedTracks] = useState<Track[]>([]);
+  const [subscribedTracks, setSubscribedTracks] = useState<RemoteTrackPublication[]>([]);
   const [displayName, setDisplayName] = useState(participant.name ?? '');
 
   const onPublicationsChanged = useCallback(() => {
-    const tracks: Track[] = [];
+    const tracks: RemoteTrackPublication[] = [];
     participant.audioTracks.forEach((track) => {
-      tracks.push(track);
+      if (track instanceof RemoteTrackPublication) tracks.push(track);
     });
     participant.videoTracks.forEach((track) => {
-      tracks.push(track);
+      if (track instanceof RemoteTrackPublication) tracks.push(track);
     });
     setSubscribedTracks(tracks);
   }, [participant]);
 
   useEffect(() => {
     const onMuted = (track: Track) => {
-      if (track.source == TrackSource.Microphone) {
+      if (track.source == Track.Source.Microphone) {
         setMuted(true);
-      } else if (track.source === TrackSource.Camera) {
+      } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(true);
       }
     };
     const onUnmuted = (track: Track) => {
-      if (track.source == TrackSource.Microphone) {
+      if (track.source == Track.Source.Microphone) {
         setMuted(false);
-      } else if (track.source === TrackSource.Camera) {
+      } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(false);
       }
     };
@@ -72,13 +72,13 @@ export function useParticipant(
 
     onPublicationsChanged();
     participant.audioTracks.forEach((track) => {
-      if (track.source === TrackSource.Microphone) {
-        setMuted(track.isMuted());
+      if (track.source === Track.Source.Microphone) {
+        setMuted(track.isMuted);
       }
     });
     participant.videoTracks.forEach((track) => {
-      if (track.source === TrackSource.Camera) {
-        setIsCameraOff(track.isMuted());
+      if (track.source === Track.Source.Camera) {
+        setIsCameraOff(track.isMuted);
       }
     });
 

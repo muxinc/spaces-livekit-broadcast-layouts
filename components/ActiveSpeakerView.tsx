@@ -9,8 +9,7 @@ import { Box, Flex, Center } from "@chakra-ui/react";
 import {
   SpaceEvent,
   RemoteParticipant,
-  ActiveSpeaker,
-  TrackSource,
+  Track,
   RemoteTrack,
   Participant,
 } from "livekit-client";
@@ -47,14 +46,12 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
           ? participants?.filter(
               (participant) =>
                 participant !== oldActiveScreensharingParticipant &&
-                participant
-                  .videoTracks
-                  .some((track) => track.source === TrackSource.Screenshare)
+                Array.from(participant.videoTracks.values())
+                  .some((track) => track.source === Track.Source.ScreenShare)
             )
           : participants?.filter((participant) =>
-              participant
-                .videoTracks
-                .some((track) => track.source === TrackSource.Screenshare)
+              Array.from(participant.videoTracks.values())
+                .some((track) => track.source === Track.Source.ScreenShare)
             );
 
       const screensharingParticipantWithVideo =
@@ -127,9 +124,8 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
         );
 
         if (
-          newActiveSpeakingParticipant
-            .videoTracks
-            .some((track) => track.source === TrackSource.Screenshare)
+          Array.from(newActiveSpeakingParticipant.videoTracks.values())
+            .some((track) => track.source === Track.Source.ScreenShare)
         ) {
           setActiveScreensharingParticipant(
             newActiveSpeakingParticipant as RemoteParticipant
@@ -153,7 +149,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       track: RemoteTrack
     ) => {
       if (
-        track.source === TrackSource.Screenshare &&
+        track.source === Track.Source.ScreenShare &&
         !activeScreensharingParticipant
       ) {
         setActiveScreensharingParticipant(participant);
@@ -165,7 +161,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       track: RemoteTrack
     ) => {
       if (
-        track.source === TrackSource.Screenshare &&
+        track.source === Track.Source.ScreenShare &&
         activeScreensharingParticipant === participant
       ) {
         setDefaultActiveScreensharingParticipant(participant);

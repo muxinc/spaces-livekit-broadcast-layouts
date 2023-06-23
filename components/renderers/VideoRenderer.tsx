@@ -28,7 +28,7 @@ export default function VideoRenderer({
 
     // The MediaStreamTrack prop needs to be observed rather than the Mux Track
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.track]);
+  }, [track.mediaStreamTrack]);
 
   return (
     <video

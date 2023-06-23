@@ -109,7 +109,7 @@ export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
 
       // Stop screen share
       localParticipant?.unpublishTracks([screenShareTrack]);
-      screenShareTrack.track?.stop();
+      screenShareTrack?.stop();
       setScreenShareTrack(null);
       setParticipantScreenSharing(null);
     }
