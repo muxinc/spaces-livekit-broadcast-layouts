@@ -12,6 +12,7 @@ import {
   ActiveSpeaker,
   TrackSource,
   RemoteTrack,
+  Participant,
 } from "livekit-client";
 
 import { useRoom } from "../hooks/useRoom";
@@ -47,18 +48,18 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
               (participant) =>
                 participant !== oldActiveScreensharingParticipant &&
                 participant
-                  .getVideoTracks()
+                  .videoTracks
                   .some((track) => track.source === TrackSource.Screenshare)
             )
           : participants?.filter((participant) =>
               participant
-                .getVideoTracks()
+                .videoTracks
                 .some((track) => track.source === TrackSource.Screenshare)
             );
 
       const screensharingParticipantWithVideo =
         filteredScreensharingParticipants?.find(
-          (participant) => !!participant.getVideoTracks()
+          (participant) => !!participant.videoTracks
         );
 
       setActiveScreensharingParticipant(
@@ -83,7 +84,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
         : participants;
 
       const speakingParticipantWithVideo = filteredSpeakingParticipants?.find(
-        (participant) => !!participant.getVideoTracks()
+        (participant) => !!participant.videoTracks
       );
 
       setActiveSpeakingParticipant(
@@ -106,10 +107,10 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     }
 
     const handleActiveSpeakersChanged = (
-      activeSpeakers: Array<ActiveSpeaker>
+      activeSpeakers: Array<Participant>
     ) => {
       const activeSpeakingParticipantIsSpeaking = activeSpeakers.some(
-        (speaker) => speaker.participant === activeSpeakingParticipant
+        (speaker) => speaker === activeSpeakingParticipant
       );
 
       if (activeSpeakingParticipantIsSpeaking) {
@@ -117,21 +118,21 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       }
 
       const newActiveSpeakingParticipant = activeSpeakers.find(
-        (speaker) => speaker.participant instanceof RemoteParticipant
+        (speaker) => speaker instanceof RemoteParticipant
       );
 
       if (newActiveSpeakingParticipant) {
         setActiveSpeakingParticipant(
-          newActiveSpeakingParticipant.participant as RemoteParticipant
+          newActiveSpeakingParticipant as RemoteParticipant
         );
 
         if (
-          newActiveSpeakingParticipant.participant
-            .getVideoTracks()
+          newActiveSpeakingParticipant
+            .videoTracks
             .some((track) => track.source === TrackSource.Screenshare)
         ) {
           setActiveScreensharingParticipant(
-            newActiveSpeakingParticipant.participant as RemoteParticipant
+            newActiveSpeakingParticipant as RemoteParticipant
           );
         }
       }
@@ -257,7 +258,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
             {participants?.map((participant) => (
               <ActiveParticipant
                 square={square}
-                key={participant.id}
+                key={participant.sid}
                 hidden={activeSpeakingParticipant !== participant}
                 participant={participant}
                 parentWidth={participantContainerWidth}
@@ -284,7 +285,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
           >
             {participants?.map((participant) => (
               <ActiveParticipant
-                key={participant.id}
+                key={participant.sid}
                 square={width === height}
                 hidden={activeSpeakingParticipant !== participant}
                 participant={participant}

@@ -61,7 +61,7 @@ export default function Crop(): JSX.Element {
         const position = layoutPositions[participants.length - 1][index];
         return (
           <Container key={index} {...position}>
-            <CropParticipant key={participant.id} participant={participant} />
+            <CropParticipant key={participant.sid} participant={participant} />
           </Container>
         );
       })}

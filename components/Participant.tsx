@@ -55,7 +55,7 @@ export default function Participant({
   return (
     <Box
       layout
-      layoutId={participant.connectionId}
+      layoutId={participant.sid}
       as={motion.div}
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}

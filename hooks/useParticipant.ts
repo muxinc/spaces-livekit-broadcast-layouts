@@ -22,14 +22,14 @@ export function useParticipant(
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [subscribedTracks, setSubscribedTracks] = useState<Track[]>([]);
-  const [displayName, setDisplayName] = useState(participant.displayName);
+  const [displayName, setDisplayName] = useState(participant.name ?? '');
 
   const onPublicationsChanged = useCallback(() => {
     const tracks: Track[] = [];
-    participant.getAudioTracks().forEach((track) => {
+    participant.audioTracks.forEach((track) => {
       tracks.push(track);
     });
-    participant.getVideoTracks().forEach((track) => {
+    participant.videoTracks.forEach((track) => {
       tracks.push(track);
     });
     setSubscribedTracks(tracks);
@@ -57,7 +57,7 @@ export function useParticipant(
       setIsSpeaking(false);
     };
     const onDisplayNameChanged = () => {
-      setDisplayName(participant.displayName);
+      setDisplayName(participant.name ?? '');
     };
 
     participant.on(ParticipantEvent.TrackMuted, onMuted);
@@ -71,12 +71,12 @@ export function useParticipant(
     participant.on(ParticipantEvent.DisplayNameChanged, onDisplayNameChanged);
 
     onPublicationsChanged();
-    participant.getAudioTracks().forEach((track) => {
+    participant.audioTracks.forEach((track) => {
       if (track.source === TrackSource.Microphone) {
         setMuted(track.isMuted());
       }
     });
-    participant.getVideoTracks().forEach((track) => {
+    participant.videoTracks.forEach((track) => {
       if (track.source === TrackSource.Camera) {
         setIsCameraOff(track.isMuted());
       }

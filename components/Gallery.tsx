@@ -54,7 +54,7 @@ export default function Gallery({}: Props): JSX.Element {
         {participants?.map((participant) => {
           return (
             <Participant
-              key={participant.id}
+              key={participant.sid}
               participant={participant}
               rounded={rounded}
             />

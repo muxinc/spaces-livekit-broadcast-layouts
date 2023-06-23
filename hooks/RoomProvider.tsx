@@ -1,8 +1,7 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
-  ActiveSpeaker,
   LocalParticipant,
-  ParticipantRole,
+  Participant,
   RemoteParticipant,
   Room,
   RoomEvent,
@@ -14,8 +13,8 @@ import { MAX_PARTICIPANTS_PER_PAGE } from "lib/constants";
 
 const participantHasTracks = (participant: RemoteParticipant) => {
   return (
-    participant.getVideoTracks().length > 0 ||
-    participant.getAudioTracks().length > 0
+    participant.videoTracks.size > 0 ||
+    participant.audioTracks.size > 0
   );
 };
 
@@ -54,11 +53,11 @@ export const RoomProvider: React.FC<Props> = ({
     const handleParticipantJoined = (newParticipant: RemoteParticipant) => {
       setParticipants((oldParticipantArray) => {
         const found = oldParticipantArray.find(
-          (p) => p.connectionId === newParticipant.connectionId
+          (p) => p.sid === newParticipant.sid
         );
         if (
           !found &&
-          newParticipant.role !== ParticipantRole.Subscriber &&
+          newParticipant.permissions?.canPublish &&
           (participantHasTracks(newParticipant) ||
             showNonPublishingParticipants)
         ) {
@@ -71,7 +70,7 @@ export const RoomProvider: React.FC<Props> = ({
     const handleParticipantLeft = (participantLeaving: RemoteParticipant) => {
       setParticipants((oldParticipantArray) =>
         oldParticipantArray.filter(
-          (p) => p.connectionId !== participantLeaving.connectionId
+          (p) => p.sid !== participantLeaving.sid
         )
       );
     };
@@ -81,7 +80,7 @@ export const RoomProvider: React.FC<Props> = ({
     ) => {
       setParticipants((oldParticipantArray) => {
         const found = oldParticipantArray.find(
-          (p) => p.connectionId === participantWhoPublished.connectionId
+          (p) => p.sid === participantWhoPublished.sid
         );
         if (!found) {
           return [...oldParticipantArray, participantWhoPublished];
@@ -99,7 +98,7 @@ export const RoomProvider: React.FC<Props> = ({
           !showNonPublishingParticipants
         ) {
           return oldParticipantArray.filter(
-            (p) => p.connectionId !== participantWhoUnpublished.connectionId
+            (p) => p.sid !== participantWhoUnpublished.sid
           );
         }
         return oldParticipantArray;
@@ -107,20 +106,20 @@ export const RoomProvider: React.FC<Props> = ({
     };
 
     const handleActiveSpeakerChanged = (
-      activeSpeakerChanges: ActiveSpeaker[]
+      activeSpeakerChanges: Participant[]
     ) => {
       setParticipants((oldParticipantArray) => {
         const updatedParticipants = [...oldParticipantArray];
 
-        activeSpeakerChanges.forEach((activeSpeaker: ActiveSpeaker) => {
-          if (activeSpeaker.participant instanceof RemoteParticipant) {
+        activeSpeakerChanges.forEach((activeSpeaker: Participant) => {
+          if (activeSpeaker instanceof RemoteParticipant) {
             const participantIndex = updatedParticipants.findIndex(
-              (p) => p.connectionId === activeSpeaker.participant.connectionId
+              (p) => p.sid === activeSpeaker.sid
             );
 
             if (participantIndex >= MAX_PARTICIPANTS_PER_PAGE - 1) {
               updatedParticipants.splice(participantIndex, 1);
-              updatedParticipants.unshift(activeSpeaker.participant);
+              updatedParticipants.unshift(activeSpeaker);
             }
           }
         });
@@ -134,15 +133,12 @@ export const RoomProvider: React.FC<Props> = ({
       setParticipants((oldParticipantArray) => {
         const updatedSubscriptionParticipants = oldParticipantArray.map(
           (oldParticipant) =>
-            oldParticipant.connectionId === participantWhoChanged.connectionId
+            oldParticipant.sid === participantWhoChanged.sid
               ? participantWhoChanged
               : oldParticipant
         );
 
-        return [
-          ...updatedSubscriptionParticipants.filter((p) => p.isSubscribed()),
-          ...updatedSubscriptionParticipants.filter((p) => !p.isSubscribed()),
-        ];
+        return [ ...updatedSubscriptionParticipants ];
       });
     };
 
@@ -170,8 +166,8 @@ export const RoomProvider: React.FC<Props> = ({
 
     room
       .connect(livekitUrl, jwt, {})
-      .then((_localParticipant: LocalParticipant) => {
-        setLocalParticipant(_localParticipant);
+      .then(() => {
+        setLocalParticipant(room.localParticipant);
       })
       .catch((error) => {
         setJoinError(error.message);
@@ -203,7 +199,7 @@ export const RoomProvider: React.FC<Props> = ({
       );
 
       setParticipants([]);
-      room.leave();
+      room.disconnect();
     };
   }, [jwt, setJoinError]);
 
