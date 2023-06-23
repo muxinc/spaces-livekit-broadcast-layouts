@@ -169,7 +169,8 @@ export const RoomProvider: React.FC<Props> = ({
       RoomEvent.TrackUnsubscribed,
       handleParticipantTrackSubscriptionChange
     );
-
+    // This tells livekit to start the RTMP process
+    console.log('START_RECORDING');
     room
       .connect(livekitUrl, jwt, {})
       .then(() => {
