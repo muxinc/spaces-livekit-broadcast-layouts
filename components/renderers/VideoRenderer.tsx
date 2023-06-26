@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Track } from "@mux/spaces-web";
+import { Track } from "livekit-client";
 
 interface Props {
   track: Track;
@@ -28,7 +28,7 @@ export default function VideoRenderer({
 
     // The MediaStreamTrack prop needs to be observed rather than the Mux Track
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.track]);
+  }, [track.mediaStreamTrack]);
 
   return (
     <video

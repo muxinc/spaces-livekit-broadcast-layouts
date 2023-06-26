@@ -3,15 +3,16 @@ import {
   LocalParticipant,
   ParticipantEvent,
   RemoteParticipant,
+  RemoteTrackPublication,
   Track,
-  TrackSource,
-} from "@mux/spaces-web";
+  TrackPublication,
+} from "livekit-client";
 
 export interface ParticipantState {
   isMuted: boolean;
   isSpeaking: boolean;
   isCameraOff: boolean;
-  subscribedTracks: Track[];
+  subscribedTracks: RemoteTrackPublication[];
   displayName: string;
 }
 
@@ -21,72 +22,64 @@ export function useParticipant(
   const [isMuted, setMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
-  const [subscribedTracks, setSubscribedTracks] = useState<Track[]>([]);
-  const [displayName, setDisplayName] = useState(participant.displayName);
+  const [subscribedTracks, setSubscribedTracks] = useState<RemoteTrackPublication[]>([]);
+  const [displayName, setDisplayName] = useState(participant.name ?? '');
 
   const onPublicationsChanged = useCallback(() => {
-    const tracks: Track[] = [];
-    participant.getAudioTracks().forEach((track) => {
-      tracks.push(track);
+    const tracks: RemoteTrackPublication[] = [];
+    participant.audioTracks.forEach((track) => {
+      if (track instanceof RemoteTrackPublication) tracks.push(track);
     });
-    participant.getVideoTracks().forEach((track) => {
-      tracks.push(track);
+    participant.videoTracks.forEach((track) => {
+      if (track instanceof RemoteTrackPublication) tracks.push(track);
     });
     setSubscribedTracks(tracks);
   }, [participant]);
 
   useEffect(() => {
-    const onMuted = (track: Track) => {
-      if (track.source == TrackSource.Microphone) {
+    const onMuted = (track: TrackPublication) => {
+      if (track.source == Track.Source.Microphone) {
         setMuted(true);
-      } else if (track.source === TrackSource.Camera) {
+      } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(true);
       }
     };
-    const onUnmuted = (track: Track) => {
-      if (track.source == TrackSource.Microphone) {
+    const onUnmuted = (track: TrackPublication) => {
+      if (track.source == Track.Source.Microphone) {
         setMuted(false);
-      } else if (track.source === TrackSource.Camera) {
+      } else if (track.source === Track.Source.Camera) {
         setIsCameraOff(false);
       }
     };
-    const onSpeaking = () => {
-      setIsSpeaking(true);
-    };
-    const stoppedSpeaking = () => {
-      setIsSpeaking(false);
-    };
     const onDisplayNameChanged = () => {
-      setDisplayName(participant.displayName);
+      setDisplayName(participant.name ?? '');
     };
 
     participant.on(ParticipantEvent.TrackMuted, onMuted);
     participant.on(ParticipantEvent.TrackUnmuted, onUnmuted);
-    participant.on(ParticipantEvent.StartedSpeaking, onSpeaking);
-    participant.on(ParticipantEvent.StoppedSpeaking, stoppedSpeaking);
+    participant.on(ParticipantEvent.IsSpeakingChanged, setIsSpeaking);
     participant.on(ParticipantEvent.TrackPublished, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackUnpublished, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackSubscribed, onPublicationsChanged);
     participant.on(ParticipantEvent.TrackUnsubscribed, onPublicationsChanged);
-    participant.on(ParticipantEvent.DisplayNameChanged, onDisplayNameChanged);
+    participant.on(ParticipantEvent.ParticipantNameChanged, onDisplayNameChanged);
 
     onPublicationsChanged();
-    participant.getAudioTracks().forEach((track) => {
-      if (track.source === TrackSource.Microphone) {
-        setMuted(track.isMuted());
+    participant.audioTracks.forEach((track) => {
+      if (track.source === Track.Source.Microphone) {
+        setMuted(track.isMuted);
       }
     });
-    participant.getVideoTracks().forEach((track) => {
-      if (track.source === TrackSource.Camera) {
-        setIsCameraOff(track.isMuted());
+    participant.videoTracks.forEach((track) => {
+      if (track.source === Track.Source.Camera) {
+        setIsCameraOff(track.isMuted);
       }
     });
 
     return () => {
       participant.off(ParticipantEvent.TrackMuted, onMuted);
       participant.off(ParticipantEvent.TrackUnmuted, onUnmuted);
-      participant.off(ParticipantEvent.StartedSpeaking, onSpeaking);
-      participant.off(ParticipantEvent.StoppedSpeaking, stoppedSpeaking);
+      participant.off(ParticipantEvent.IsSpeakingChanged, setIsSpeaking);
       participant.off(ParticipantEvent.TrackPublished, onPublicationsChanged);
       participant.off(ParticipantEvent.TrackUnpublished, onPublicationsChanged);
       participant.off(ParticipantEvent.TrackSubscribed, onPublicationsChanged);
@@ -95,7 +88,7 @@ export function useParticipant(
         onPublicationsChanged
       );
       participant.off(
-        ParticipantEvent.DisplayNameChanged,
+        ParticipantEvent.ParticipantNameChanged,
         onDisplayNameChanged
       );
     };

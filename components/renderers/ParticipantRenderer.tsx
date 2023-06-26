@@ -1,5 +1,5 @@
 import { Center } from "@chakra-ui/react";
-import { RemoteParticipant, TrackSource } from "@mux/spaces-web";
+import { RemoteParticipant, Track } from "livekit-client";
 import VideoOff from "components/icons/VideoOff";
 import { useParticipant } from "hooks/useParticipant";
 import AudioRenderer from "./AudioRenderer";
@@ -14,23 +14,23 @@ export default function ParticipantRenderer({ participant }: Props) {
   const { isCameraOff, subscribedTracks } = useParticipant(participant);
 
   const micTrack = subscribedTracks.find(
-    (track) => track.source === TrackSource.Microphone
+    (track) => track.source === Track.Source.Microphone
   );
 
   const cameraTrack = subscribedTracks.find(
-    (track) => track.source === TrackSource.Camera
+    (track) => track.source === Track.Source.Camera
   );
 
   return (
     <>
-      {micTrack && <AudioRenderer track={micTrack} />}
+      {micTrack?.track && <AudioRenderer track={micTrack.track} />}
 
       <DisplayNameRenderer participant={participant} />
 
-      {cameraTrack && (
+      {cameraTrack?.track && (
         <VideoRenderer
-          connectionId={participant.connectionId}
-          track={cameraTrack}
+          connectionId={participant.sid}
+          track={cameraTrack.track}
         />
       )}
 

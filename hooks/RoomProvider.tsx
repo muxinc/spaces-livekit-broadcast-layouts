@@ -1,12 +1,13 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
-  ActiveSpeaker,
   LocalParticipant,
-  ParticipantRole,
+  Participant,
   RemoteParticipant,
-  Space,
-  SpaceEvent,
-} from "@mux/spaces-web";
+  RemoteTrack,
+  RemoteTrackPublication,
+  Room,
+  RoomEvent,
+} from "livekit-client";
 
 import { MuxContext } from "./MuxContext";
 import { DisplayMediaProvider } from "./DisplayMediaProvider";
@@ -14,38 +15,38 @@ import { MAX_PARTICIPANTS_PER_PAGE } from "lib/constants";
 
 const participantHasTracks = (participant: RemoteParticipant) => {
   return (
-    participant.getVideoTracks().length > 0 ||
-    participant.getAudioTracks().length > 0
+    participant.videoTracks.size > 0 ||
+    participant.audioTracks.size > 0
   );
 };
 
 type Props = {
+  livekitUrl?: string;
   jwt?: string;
   showNonPublishingParticipants: boolean;
   children: ReactNode;
 };
 
-export const SpaceProvider: React.FC<Props> = ({
+export const RoomProvider: React.FC<Props> = ({
   children,
   showNonPublishingParticipants,
   jwt,
+  livekitUrl,
 }) => {
-  const spaceRef = useRef<Space | null>(null);
+  const roomRef = useRef<Room | null>(null);
   const [participants, setParticipants] = useState<RemoteParticipant[]>([]);
   const [localParticipant, setLocalParticipant] =
     useState<LocalParticipant | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!jwt) {
+    if (!jwt || !livekitUrl) {
       return;
     }
 
-    let space: Space;
+    let room: Room;
     try {
-      space = new Space(jwt, {
-        automaticParticipantLimit: MAX_PARTICIPANTS_PER_PAGE,
-      });
+      room = new Room();
     } catch (e: any) {
       setJoinError(e.message);
       return;
@@ -54,11 +55,11 @@ export const SpaceProvider: React.FC<Props> = ({
     const handleParticipantJoined = (newParticipant: RemoteParticipant) => {
       setParticipants((oldParticipantArray) => {
         const found = oldParticipantArray.find(
-          (p) => p.connectionId === newParticipant.connectionId
+          (p) => p.sid === newParticipant.sid
         );
         if (
           !found &&
-          newParticipant.role !== ParticipantRole.Subscriber &&
+          newParticipant.permissions?.canPublish &&
           (participantHasTracks(newParticipant) ||
             showNonPublishingParticipants)
         ) {
@@ -71,17 +72,18 @@ export const SpaceProvider: React.FC<Props> = ({
     const handleParticipantLeft = (participantLeaving: RemoteParticipant) => {
       setParticipants((oldParticipantArray) =>
         oldParticipantArray.filter(
-          (p) => p.connectionId !== participantLeaving.connectionId
+          (p) => p.sid !== participantLeaving.sid
         )
       );
     };
 
     const handleParticipantTrackPublished = (
+      _publication: RemoteTrackPublication,
       participantWhoPublished: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
         const found = oldParticipantArray.find(
-          (p) => p.connectionId === participantWhoPublished.connectionId
+          (p) => p.sid === participantWhoPublished.sid
         );
         if (!found) {
           return [...oldParticipantArray, participantWhoPublished];
@@ -91,6 +93,7 @@ export const SpaceProvider: React.FC<Props> = ({
     };
 
     const handleParticipantTrackUnpublished = (
+      _publication: RemoteTrackPublication,
       participantWhoUnpublished: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
@@ -99,7 +102,7 @@ export const SpaceProvider: React.FC<Props> = ({
           !showNonPublishingParticipants
         ) {
           return oldParticipantArray.filter(
-            (p) => p.connectionId !== participantWhoUnpublished.connectionId
+            (p) => p.sid !== participantWhoUnpublished.sid
           );
         }
         return oldParticipantArray;
@@ -107,20 +110,20 @@ export const SpaceProvider: React.FC<Props> = ({
     };
 
     const handleActiveSpeakerChanged = (
-      activeSpeakerChanges: ActiveSpeaker[]
+      activeSpeakerChanges: Participant[]
     ) => {
       setParticipants((oldParticipantArray) => {
         const updatedParticipants = [...oldParticipantArray];
 
-        activeSpeakerChanges.forEach((activeSpeaker: ActiveSpeaker) => {
-          if (activeSpeaker.participant instanceof RemoteParticipant) {
+        activeSpeakerChanges.forEach((activeSpeaker: Participant) => {
+          if (activeSpeaker instanceof RemoteParticipant) {
             const participantIndex = updatedParticipants.findIndex(
-              (p) => p.connectionId === activeSpeaker.participant.connectionId
+              (p) => p.sid === activeSpeaker.sid
             );
 
             if (participantIndex >= MAX_PARTICIPANTS_PER_PAGE - 1) {
               updatedParticipants.splice(participantIndex, 1);
-              updatedParticipants.unshift(activeSpeaker.participant);
+              updatedParticipants.unshift(activeSpeaker);
             }
           }
         });
@@ -129,88 +132,89 @@ export const SpaceProvider: React.FC<Props> = ({
     };
 
     const handleParticipantTrackSubscriptionChange = (
+      _track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participantWhoChanged: RemoteParticipant
     ) => {
       setParticipants((oldParticipantArray) => {
         const updatedSubscriptionParticipants = oldParticipantArray.map(
           (oldParticipant) =>
-            oldParticipant.connectionId === participantWhoChanged.connectionId
+            oldParticipant.sid === participantWhoChanged.sid
               ? participantWhoChanged
               : oldParticipant
         );
 
-        return [
-          ...updatedSubscriptionParticipants.filter((p) => p.isSubscribed()),
-          ...updatedSubscriptionParticipants.filter((p) => !p.isSubscribed()),
-        ];
+        return [ ...updatedSubscriptionParticipants ];
       });
     };
 
-    space.on(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-    space.on(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+    room.on(RoomEvent.ParticipantConnected, handleParticipantJoined);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantLeft);
 
-    space.on(
-      SpaceEvent.ParticipantTrackPublished,
+    room.on(
+      RoomEvent.TrackPublished,
       handleParticipantTrackPublished
     );
-    space.on(
-      SpaceEvent.ParticipantTrackUnpublished,
+    room.on(
+      RoomEvent.TrackUnpublished,
       handleParticipantTrackUnpublished
     );
-    space.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+    room.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
-    space.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+    room.on(
+      RoomEvent.TrackSubscribed,
       handleParticipantTrackSubscriptionChange
     );
-    space.on(
-      SpaceEvent.ParticipantTrackUnsubscribed,
+    room.on(
+      RoomEvent.TrackUnsubscribed,
       handleParticipantTrackSubscriptionChange
     );
-
-    space
-      .join()
-      .then((_localParticipant: LocalParticipant) => {
-        setLocalParticipant(_localParticipant);
+    // This tells livekit to start the RTMP process
+    console.log('START_RECORDING');
+    room
+      .connect(livekitUrl, jwt, {})
+      .then(() => {
+        setLocalParticipant(room.localParticipant);
+        room.participants.forEach(handleParticipantJoined);
       })
       .catch((error) => {
         setJoinError(error.message);
       });
 
-    spaceRef.current = space;
+    roomRef.current = room;
 
     return () => {
-      space.off(SpaceEvent.ParticipantJoined, handleParticipantJoined);
-      space.off(SpaceEvent.ParticipantLeft, handleParticipantLeft);
+      room.off(RoomEvent.ParticipantConnected, handleParticipantJoined);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantLeft);
 
-      space.off(
-        SpaceEvent.ParticipantTrackPublished,
+      room.off(
+        RoomEvent.TrackPublished,
         handleParticipantTrackPublished
       );
-      space.off(
-        SpaceEvent.ParticipantTrackUnpublished,
+      room.off(
+        RoomEvent.TrackUnpublished,
         handleParticipantTrackUnpublished
       );
-      space.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
+      room.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChanged);
 
-      space.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+      room.off(
+        RoomEvent.TrackSubscribed,
         handleParticipantTrackSubscriptionChange
       );
-      space.off(
-        SpaceEvent.ParticipantTrackUnsubscribed,
+      room.off(
+        RoomEvent.TrackUnsubscribed,
         handleParticipantTrackSubscriptionChange
       );
 
       setParticipants([]);
-      space.leave();
+      room.disconnect();
     };
   }, [jwt, setJoinError]);
 
   return (
     <MuxContext.Provider
       value={{
-        space: spaceRef.current,
+        room: roomRef.current,
         participants,
         localParticipant,
         joinError,

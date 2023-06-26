@@ -9,13 +9,13 @@ import {
   Track,
   RemoteParticipant,
   RemoteTrack,
-  TrackSource,
-  SpaceEvent,
+  RoomEvent,
   LocalTrack,
   LocalParticipant,
-} from "@mux/spaces-web";
+  RemoteTrackPublication,
+} from "livekit-client";
 
-import { useSpace } from "./useSpace";
+import { useRoom } from "./useRoom";
 import { useLocalParticipant } from "./useLocalParticipant";
 import { DisplayMediaContext } from "./DisplayMediaContext";
 
@@ -24,7 +24,7 @@ type Props = {
 };
 
 export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
-  const { space } = useSpace();
+  const { room } = useRoom();
   const localParticipant = useLocalParticipant();
   const [screenShareTrack, setScreenShareTrack] = useState<Track | null>(null);
   const [screenShareAudioTrack, setScreenShareAudioTrack] =
@@ -40,62 +40,63 @@ export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
   // Screenshare subscribed
   useEffect(() => {
     const handleScreenShareSubscribed = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
-      if (track.source === TrackSource.Screenshare) {
+      if (track.source === Track.Source.ScreenShare) {
         setScreenShareTrack(track);
         setParticipantScreenSharing(participant);
       }
 
-      if (track.source === TrackSource.ScreenshareAudio) {
+      if (track.source === Track.Source.ScreenShareAudio) {
         setScreenShareAudioTrack(track);
         setParticipantScreenSharing(participant);
       }
     };
 
-    space?.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+    room?.on(
+      RoomEvent.TrackSubscribed,
       handleScreenShareSubscribed
     );
 
     return () => {
-      space?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+      room?.off(
+        RoomEvent.TrackSubscribed,
         handleScreenShareSubscribed
       );
     };
-  }, [space]);
+  }, [room]);
 
   // Screenshare unsubscribed
   useEffect(() => {
     const handleScreenShareUnsubscribed = (
+      publication: RemoteTrackPublication,
       _participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
-      if (track.source === TrackSource.Screenshare) {
+      if (publication.source === Track.Source.ScreenShare) {
         setScreenShareTrack(null);
         setParticipantScreenSharing(null);
       }
 
-      if (track.source === TrackSource.ScreenshareAudio) {
+      if (publication.source === Track.Source.ScreenShareAudio) {
         setScreenShareTrack(null);
         setParticipantScreenSharing(null);
       }
     };
 
-    space?.on(
-      SpaceEvent.ParticipantTrackUnpublished,
+    room?.on(
+      RoomEvent.TrackUnpublished,
       handleScreenShareUnsubscribed
     );
 
     return () => {
-      space?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+      room?.off(
+        RoomEvent.TrackUnpublished,
         handleScreenShareUnsubscribed
       );
     };
-  }, [space]);
+  }, [room]);
 
   const toggleScreenShare = useCallback(async () => {
     if (screenShareTrack) {
@@ -109,7 +110,7 @@ export const DisplayMediaProvider: React.FC<Props> = ({ children }) => {
 
       // Stop screen share
       localParticipant?.unpublishTracks([screenShareTrack]);
-      screenShareTrack.track?.stop();
+      screenShareTrack?.stop();
       setScreenShareTrack(null);
       setParticipantScreenSharing(null);
     }

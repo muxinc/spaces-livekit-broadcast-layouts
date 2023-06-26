@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { RemoteParticipant } from "@mux/spaces-web";
+import { RemoteParticipant } from "livekit-client";
 import useLayout from "hooks/useLayout";
 import { useParticipant } from "hooks/useParticipant";
 import { useParticipants } from "hooks/useParticipants";

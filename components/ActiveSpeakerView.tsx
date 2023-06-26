@@ -7,14 +7,15 @@ import {
 } from "react";
 import { Box, Flex, Center } from "@chakra-ui/react";
 import {
-  SpaceEvent,
+  RoomEvent,
   RemoteParticipant,
-  ActiveSpeaker,
-  TrackSource,
+  Track,
   RemoteTrack,
-} from "@mux/spaces-web";
+  Participant,
+  RemoteTrackPublication,
+} from "livekit-client";
 
-import { useSpace } from "../hooks/useSpace";
+import { useRoom } from "../hooks/useRoom";
 import { useScreenShare } from "hooks/useScreenShare";
 import { useParticipants } from "../hooks/useParticipants";
 import useWindowDimensions from "../hooks/useWindowDimensions";
@@ -27,7 +28,7 @@ import { Layout } from "lib/types";
 interface Props {}
 
 export default function ActiveSpeakerView({}: Props): JSX.Element {
-  const { space } = useSpace();
+  const { room } = useRoom();
   const participants = useParticipants();
   const { screenShareTrack, screenShareAudioTrack } = useScreenShare();
   const layout = useLayout();
@@ -46,19 +47,17 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
           ? participants?.filter(
               (participant) =>
                 participant !== oldActiveScreensharingParticipant &&
-                participant
-                  .getVideoTracks()
-                  .some((track) => track.source === TrackSource.Screenshare)
+                Array.from(participant.videoTracks.values())
+                  .some((track) => track.source === Track.Source.ScreenShare)
             )
           : participants?.filter((participant) =>
-              participant
-                .getVideoTracks()
-                .some((track) => track.source === TrackSource.Screenshare)
+              Array.from(participant.videoTracks.values())
+                .some((track) => track.source === Track.Source.ScreenShare)
             );
 
       const screensharingParticipantWithVideo =
         filteredScreensharingParticipants?.find(
-          (participant) => !!participant.getVideoTracks()
+          (participant) => !!participant.videoTracks
         );
 
       setActiveScreensharingParticipant(
@@ -83,7 +82,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
         : participants;
 
       const speakingParticipantWithVideo = filteredSpeakingParticipants?.find(
-        (participant) => !!participant.getVideoTracks()
+        (participant) => !!participant.videoTracks
       );
 
       setActiveSpeakingParticipant(
@@ -106,10 +105,10 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     }
 
     const handleActiveSpeakersChanged = (
-      activeSpeakers: Array<ActiveSpeaker>
+      activeSpeakers: Array<Participant>
     ) => {
       const activeSpeakingParticipantIsSpeaking = activeSpeakers.some(
-        (speaker) => speaker.participant === activeSpeakingParticipant
+        (speaker) => speaker === activeSpeakingParticipant
       );
 
       if (activeSpeakingParticipantIsSpeaking) {
@@ -117,21 +116,20 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
       }
 
       const newActiveSpeakingParticipant = activeSpeakers.find(
-        (speaker) => speaker.participant instanceof RemoteParticipant
+        (speaker) => speaker instanceof RemoteParticipant
       );
 
       if (newActiveSpeakingParticipant) {
         setActiveSpeakingParticipant(
-          newActiveSpeakingParticipant.participant as RemoteParticipant
+          newActiveSpeakingParticipant as RemoteParticipant
         );
 
         if (
-          newActiveSpeakingParticipant.participant
-            .getVideoTracks()
-            .some((track) => track.source === TrackSource.Screenshare)
+          Array.from(newActiveSpeakingParticipant.videoTracks.values())
+            .some((track) => track.source === Track.Source.ScreenShare)
         ) {
           setActiveScreensharingParticipant(
-            newActiveSpeakingParticipant.participant as RemoteParticipant
+            newActiveSpeakingParticipant as RemoteParticipant
           );
         }
       }
@@ -148,11 +146,12 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     };
 
     const handleScreenshareSubscription = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
       if (
-        track.source === TrackSource.Screenshare &&
+        track.source === Track.Source.ScreenShare &&
         !activeScreensharingParticipant
       ) {
         setActiveScreensharingParticipant(participant);
@@ -160,37 +159,38 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
     };
 
     const handleScreenshareUnsubscription = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
       participant: RemoteParticipant,
-      track: RemoteTrack
     ) => {
       if (
-        track.source === TrackSource.Screenshare &&
+        track.source === Track.Source.ScreenShare &&
         activeScreensharingParticipant === participant
       ) {
         setDefaultActiveScreensharingParticipant(participant);
       }
     };
 
-    space?.on(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-    space?.on(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
-    space?.on(
-      SpaceEvent.ParticipantTrackSubscribed,
+    room?.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+    room?.on(RoomEvent.ParticipantDisconnected, handleActiveParticipantLeft);
+    room?.on(
+      RoomEvent.TrackSubscribed,
       handleScreenshareSubscription
     );
-    space?.on(
-      SpaceEvent.ParticipantTrackUnsubscribed,
+    room?.on(
+      RoomEvent.TrackUnsubscribed,
       handleScreenshareUnsubscription
     );
 
     return () => {
-      space?.off(SpaceEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
-      space?.off(SpaceEvent.ParticipantLeft, handleActiveParticipantLeft);
-      space?.off(
-        SpaceEvent.ParticipantTrackSubscribed,
+      room?.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+      room?.off(RoomEvent.ParticipantDisconnected, handleActiveParticipantLeft);
+      room?.off(
+        RoomEvent.TrackSubscribed,
         handleScreenshareSubscription
       );
-      space?.off(
-        SpaceEvent.ParticipantTrackUnsubscribed,
+      room?.off(
+        RoomEvent.TrackUnsubscribed,
         handleScreenshareUnsubscription
       );
     };
@@ -257,7 +257,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
             {participants?.map((participant) => (
               <ActiveParticipant
                 square={square}
-                key={participant.id}
+                key={participant.sid}
                 hidden={activeSpeakingParticipant !== participant}
                 participant={participant}
                 parentWidth={participantContainerWidth}
@@ -284,7 +284,7 @@ export default function ActiveSpeakerView({}: Props): JSX.Element {
           >
             {participants?.map((participant) => (
               <ActiveParticipant
-                key={participant.id}
+                key={participant.sid}
                 square={width === height}
                 hidden={activeSpeakingParticipant !== participant}
                 participant={participant}

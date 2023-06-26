@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { RemoteParticipant, TrackSource } from "@mux/spaces-web";
+import { RemoteParticipant, Track } from "livekit-client";
 
 import { useParticipant } from "../hooks/useParticipant";
 import { useParticipants } from "../hooks/useParticipants";
@@ -34,18 +34,18 @@ export default function Participant({
   }
 
   const micTrack = subscribedTracks.find(
-    (track) => track.source === TrackSource.Microphone
+    (track) => track.source === Track.Source.Microphone
   );
 
   const cameraTrack = subscribedTracks.find(
-    (track) => track.source === TrackSource.Camera
+    (track) => track.source === Track.Source.Camera
   );
 
   if (
     participants &&
     participants.length === 1 &&
-    cameraTrack &&
-    cameraTrack?.width < cameraTrack?.height &&
+    cameraTrack?.dimensions &&
+    cameraTrack.dimensions.width < cameraTrack.dimensions.height &&
     windowWidth < windowHeight
   ) {
     width = windowWidth;
@@ -55,7 +55,7 @@ export default function Participant({
   return (
     <Box
       layout
-      layoutId={participant.connectionId}
+      layoutId={participant.sid}
       as={motion.div}
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}

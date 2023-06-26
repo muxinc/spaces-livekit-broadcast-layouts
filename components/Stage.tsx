@@ -1,7 +1,7 @@
 import React from "react";
 import { Spinner, Center, Flex } from "@chakra-ui/react";
 
-import { useSpace } from "../hooks/useSpace";
+import { useRoom } from "../hooks/useRoom";
 import { useScreenShare } from "hooks/useScreenShare";
 import useWindowDimensions from "../hooks/useWindowDimensions";
 import Gallery from "./Gallery";
@@ -13,7 +13,7 @@ import useLayout from "hooks/useLayout";
 import Crop from "./Crop";
 
 export default function Stage(): JSX.Element {
-  const { space } = useSpace();
+  const { room } = useRoom();
   const { width = 0, height = 0 } = useWindowDimensions();
   const { screenShareTrack } = useScreenShare();
   const backgroundImage = useBackgroundImage();
@@ -49,7 +49,7 @@ export default function Stage(): JSX.Element {
         backgroundRepeat="no-repeat"
         backgroundPosition="top left"
       >
-        {!space ? (
+        {!room ? (
           <Center height="100%">
             <Spinner colorScheme="purple" size="xl" />
           </Center>

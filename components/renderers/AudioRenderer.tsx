@@ -1,4 +1,4 @@
-import { Track } from "@mux/spaces-web";
+import { Track } from "livekit-client";
 import { useEffect, useRef } from "react";
 
 interface AudioTrackProps {
@@ -19,7 +19,7 @@ const AudioRenderer = ({ track }: AudioTrackProps) => {
 
     // The MediaStreamTrack needs to be observed rather than the Mux Track
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.track]);
+  }, [track.mediaStreamTrack]);
 
   return <audio ref={audioEl} autoPlay playsInline />;
 };
