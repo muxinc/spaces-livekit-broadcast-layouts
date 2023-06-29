@@ -1,34 +1,28 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Mux Spaces Broadcast Layouts
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+These are a set of [LiveKit compatible](https://docs.livekit.io/server/egress/custom-template/) layouts for their composite recording functionality.
 
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Usage in LiveKit
+
+After you deploy these to vercel or using Mux's Vercel deployment `https://mux-spaces-broadcast-layouts.vercel.app/` you can
+specify a `customBaseUrl` when starting your [`RoomCompositeEgress`](https://docs.livekit.io/server/egress/room-composite/#starting-a-roomcomposite)
+
+## Layouts 
+
+When starting your `RoomCompositeEgress` one of the parameters is `layout`, based on what you pass in you'll get one of three options:
+
+### `gallery`
+The Gallery layout evenly spaces out participants like you would expect in a typical online meeting. When a screen share is present, the layout allocates more space to the screen share while still rendering your participants’ video and audio.
+
+### `active-speaker`
+The Active Speaker layout focuses on one participant at a time and is useful when you need to focus on whoever is speaking, like in a webinar. As with Gallery, this layout also shows the screen share while still rendering the active speaking participant.
+
+### `crop`
+Crop is designed to maximize the use of your livestream’s pixel real estate, regardless of how many participants you have.
+Crop is most beneficial when you have only 2 or 3 people on-stream. It crops the input video on the fly, squeezing in the edges, so it's best to advise your participants to stay centered in their own camera view.
