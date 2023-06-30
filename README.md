@@ -10,8 +10,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 ## Usage in LiveKit
 
-After you deploy these to vercel or using Mux's Vercel deployment `https://mux-spaces-broadcast-layouts.vercel.app/` you can
-specify a `customBaseUrl` when starting your [`RoomCompositeEgress`](https://docs.livekit.io/server/egress/room-composite/#starting-a-roomcomposite)
+After you deploy these to vercel specify the url to your deploying as `customBaseUrl` when starting your [`RoomCompositeEgress`](https://docs.livekit.io/server/egress/room-composite/#starting-a-roomcomposite)
 
 ## Layouts 
 
