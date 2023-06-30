@@ -1,4 +1,4 @@
-# Mux Spaces Broadcast Layouts
+# Spaces LiveKit Broadcast Layouts
 
 These are a set of [LiveKit compatible](https://docs.livekit.io/server/egress/custom-template/) layouts for their composite recording functionality.
 
